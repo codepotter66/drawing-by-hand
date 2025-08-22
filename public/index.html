@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手部追踪画图应用</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="favicon/favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon/favicon-96x96.png">
+    <link rel="apple-touch-icon" href="favicon/apple-touch-icon.png">
+    <link rel="manifest" href="favicon/site.webmanifest">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title-container">
+                <h1>Hand-Drawing</h1>
+                <div class="subtitle">Gesture Recognition</div>
+            </div>
+            <div class="header-decoration">
+                <div class="decoration-line"></div>
+                <div class="decoration-dot"></div>
+                <div class="decoration-line"></div>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="canvas-container">
+                <video id="video" autoplay muted></video>
+                <canvas id="canvas"></canvas>
+                <canvas id="templateCanvas"></canvas>
+                <canvas id="fingerCanvas"></canvas>
+            </div>
+            
+            <div class="camera-placeholder" id="cameraPlaceholder">
+                <div class="placeholder-content">
+                    <div class="placeholder-icon">📹</div>
+                    <div class="placeholder-title">请开启摄像头</div>
+                    <div class="placeholder-subtitle">点击右侧工具栏的"摄像头"按钮开始绘图</div>
+                    <div class="placeholder-tips">
+                        <div class="tip-item">• 拇指和食指捏合进行画图</div>
+                        <div class="tip-item">• 食指指尖位置作为画笔位置</div>
+                        <div class="tip-item">• 松开手指停止画图</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="toolbar">
+                <div class="toolbar-section">
+                    <h4>工具</h4>
+                    <div class="tool-buttons">
+                        <button id="brushTool" class="tool-btn active" title="画笔">
+                            <span class="tool-icon">🖌️</span>
+                        </button>
+                        <button id="eraserTool" class="tool-btn" title="橡皮擦">
+                            <span class="tool-icon">🧽</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="toolbar-section">
+                    <h4>颜色</h4>
+                    <div class="color-picker">
+                        <label>自定义:</label>
+                        <input type="color" id="colorPicker" value="#ff0000">
+                    </div>
+                    <div class="basic-colors">
+                        <label>基本颜色:</label>
+                        <div class="color-grid">
+                            <button class="color-btn" data-color="#ff0000" style="background-color: #ff0000;"></button>
+                            <button class="color-btn" data-color="#ff6600" style="background-color: #ff6600;"></button>
+                            <button class="color-btn" data-color="#ffff00" style="background-color: #ffff00;"></button>
+                            <button class="color-btn" data-color="#00ff00" style="background-color: #00ff00;"></button>
+                            <button class="color-btn" data-color="#00ffff" style="background-color: #00ffff;"></button>
+                            <button class="color-btn" data-color="#0000ff" style="background-color: #0000ff;"></button>
+                            <button class="color-btn" data-color="#ff00ff" style="background-color: #ff00ff;"></button>
+                            <button class="color-btn" data-color="#800080" style="background-color: #800080;"></button>
+                            <button class="color-btn" data-color="#000000" style="background-color: #000000;"></button>
+                            <button class="color-btn" data-color="#ffffff" style="background-color: #ffffff; border: 1px solid #ccc;"></button>
+                        </div>
+                    </div>
+                </div>
+                
+                               <div class="toolbar-section">
+                   <h4>大小</h4>
+                   <div class="brush-size-buttons">
+                       <button class="size-btn" data-size="3" title="小">小</button>
+                       <button class="size-btn active" data-size="8" title="中">中</button>
+                       <button class="size-btn" data-size="15" title="大">大</button>
+                   </div>
+               </div>
+                
+                               <div class="toolbar-section">
+                   <h4>操作</h4>
+                   <button id="clearBtn" class="toolbar-btn">清除</button>
+                   <button id="saveBtn" class="toolbar-btn">保存</button>
+                   <button id="toggleCamera" class="toolbar-btn">摄像头</button>
+               </div>
+               
+
+                
+                               <div class="toolbar-section">
+                   <h4>模板</h4>
+                   <button id="toggleTemplates" class="toolbar-btn">简笔画</button>
+                   <div class="template-options">
+                       <label class="checkbox-label">
+                           <input type="checkbox" id="includeTemplate">
+                           <span>包含轮廓</span>
+                       </label>
+                   </div>
+               </div>
+               
+               <div class="toolbar-section">
+                   <h4>帮助</h4>
+                   <button id="toggleInstructions" class="toolbar-btn">说明</button>
+               </div>
+            </div>
+        </div>
+        
+        <div class="instructions" id="instructions">
+            <div class="instructions-header">
+                <h3>使用说明</h3>
+                <button id="closeInstructions" class="close-btn">×</button>
+            </div>
+            <ul>
+                <li>点击"开启摄像头"按钮启动摄像头</li>
+                <li>将手掌放在摄像头前，拇指和食指捏合进行画图</li>
+                <li>食指指尖位置将作为画笔位置（蓝色圆点指示）</li>
+                <li>拇指和食指捏合时开始画图（红色圆点），松开时停止画图</li>
+                <li>点击"清除画布"按钮清空画布</li>
+                <li>可以调整画笔颜色和大小</li>
+            </ul>
+        </div>
+        
+        <!-- 简笔画模板选择界面 -->
+        <div class="templates-modal" id="templatesModal">
+            <div class="templates-content">
+                <div class="templates-header">
+                    <h3>选择简笔画模板</h3>
+                    <button id="closeTemplates" class="close-btn">×</button>
+                </div>
+                <div class="templates-grid">
+                    <div class="template-item" data-template="cat">
+                        <div class="template-preview">🐱</div>
+                        <div class="template-name">小猫</div>
+                    </div>
+                    <div class="template-item" data-template="dog">
+                        <div class="template-preview">🐕</div>
+                        <div class="template-name">小狗</div>
+                    </div>
+                    <div class="template-item" data-template="bird">
+                        <div class="template-preview">🐦</div>
+                        <div class="template-name">小鸟</div>
+                    </div>
+                    <div class="template-item" data-template="fish">
+                        <div class="template-preview">🐠</div>
+                        <div class="template-name">小鱼</div>
+                    </div>
+                    <div class="template-item" data-template="flower">
+                        <div class="template-preview">🌸</div>
+                        <div class="template-name">花朵</div>
+                    </div>
+                    <div class="template-item" data-template="tree">
+                        <div class="template-preview">🌳</div>
+                        <div class="template-name">大树</div>
+                    </div>
+                    <div class="template-item" data-template="butterfly">
+                        <div class="template-preview">🦋</div>
+                        <div class="template-name">蝴蝶</div>
+                    </div>
+                    <div class="template-item" data-template="house">
+                        <div class="template-preview">🏠</div>
+                        <div class="template-name">房子</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
