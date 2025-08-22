@@ -2,6 +2,8 @@
 
 一个基于MediaPipe的手部追踪画图应用，使用摄像头实时追踪手部动作进行画图。
 
+[English](README_EN.md) | [中文](README.md)
+
 ## 功能特性
 
 - 🎨 实时手部追踪画图
