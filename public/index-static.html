@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>手部追踪画图应用</title>
+    
+    <!-- Favicon -->
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+    <link rel="manifest" href="favicon/site.webmanifest">
+    
+    <!-- MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1>手部追踪画图应用</h1>
+        <div class="subtitle">Hand Tracking Drawing Application</div>
+        <div class="header-decoration"></div>
+    </div>
+
+    <div class="main-content">
+        <div class="canvas-container">
+            <video id="video" autoplay muted></video>
+            <canvas id="canvas"></canvas>
+            <canvas id="templateCanvas"></canvas>
+            <canvas id="fingerCanvas"></canvas>
+        </div>
+        
+        <div class="camera-placeholder">
+            <div class="placeholder-content">
+                <div class="placeholder-icon">📹</div>
+                <div class="placeholder-text">请点击"摄像头"按钮启动摄像头</div>
+                <div class="placeholder-subtext">Please click "Camera" button to start</div>
+            </div>
+        </div>
+        
+        <div class="toolbar">
+            <div class="toolbar-section">
+                <h3>工具</h3>
+                <div class="tool-buttons">
+                    <button class="tool-btn active" data-tool="brush">画笔</button>
+                    <button class="tool-btn" data-tool="eraser">橡皮擦</button>
+                </div>
+            </div>
+            
+            <div class="toolbar-section">
+                <h3>颜色</h3>
+                <div class="basic-colors">
+                    <div class="color-grid">
+                        <button class="color-btn active" data-color="#000000" style="background-color: #000000;"></button>
+                        <button class="color-btn" data-color="#FF0000" style="background-color: #FF0000;"></button>
+                        <button class="color-btn" data-color="#00FF00" style="background-color: #00FF00;"></button>
+                        <button class="color-btn" data-color="#0000FF" style="background-color: #0000FF;"></button>
+                        <button class="color-btn" data-color="#FFFF00" style="background-color: #FFFF00;"></button>
+                        <button class="color-btn" data-color="#FF00FF" style="background-color: #FF00FF;"></button>
+                        <button class="color-btn" data-color="#00FFFF" style="background-color: #00FFFF;"></button>
+                        <button class="color-btn" data-color="#FFA500" style="background-color: #FFA500;"></button>
+                        <button class="color-btn" data-color="#800080" style="background-color: #800080;"></button>
+                        <button class="color-btn" data-color="#008000" style="background-color: #008000;"></button>
+                    </div>
+                    <input type="color" id="colorPicker" value="#000000">
+                </div>
+            </div>
+            
+            <div class="toolbar-section">
+                <h3>画笔大小</h3>
+                <div class="brush-size-buttons">
+                    <button class="size-btn active" data-size="small">小</button>
+                    <button class="size-btn" data-size="medium">中</button>
+                    <button class="size-btn" data-size="large">大</button>
+                </div>
+            </div>
+            
+            <div class="toolbar-section">
+                <h3>模板</h3>
+                <button class="tool-btn" id="templatesBtn">简笔画</button>
+                <div class="template-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="includeOutline"> 包含轮廓
+                    </label>
+                </div>
+            </div>
+            
+            <div class="toolbar-section">
+                <h3>操作</h3>
+                <div class="tool-buttons">
+                    <button class="tool-btn" id="cameraBtn">摄像头</button>
+                    <button class="tool-btn" id="clearBtn">清除</button>
+                    <button class="tool-btn" id="saveBtn">保存</button>
+                    <button class="tool-btn" id="instructionsBtn">使用说明</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用说明模态框 -->
+    <div class="instructions" id="instructions">
+        <div class="instructions-content">
+            <h2>使用说明</h2>
+            <div class="instructions-text">
+                <h3>基本操作：</h3>
+                <ul>
+                    <li>点击"摄像头"按钮启动摄像头</li>
+                    <li>拇指和食指捏合进行画图</li>
+                    <li>食指指尖位置作为画笔位置</li>
+                    <li>松开手指停止画图</li>
+                </ul>
+                
+                <h3>工具选择：</h3>
+                <ul>
+                    <li>画笔：正常画图模式</li>
+                    <li>橡皮擦：擦除已绘制的内容</li>
+                </ul>
+                
+                <h3>颜色和大小：</h3>
+                <ul>
+                    <li>选择10种基本颜色或自定义颜色</li>
+                    <li>选择小、中、大三种画笔大小</li>
+                </ul>
+                
+                <h3>简笔画模板：</h3>
+                <ul>
+                    <li>点击"简笔画"按钮选择模板</li>
+                    <li>选择是否包含轮廓线</li>
+                    <li>模板不会保存到最终图片中</li>
+                </ul>
+                
+                <h3>保存作品：</h3>
+                <ul>
+                    <li>点击"保存"按钮下载PNG图片</li>
+                    <li>点击"清除"按钮重新开始</li>
+                </ul>
+            </div>
+            <button class="close-btn" id="closeInstructions">关闭</button>
+        </div>
+    </div>
+
+    <!-- 模板选择模态框 -->
+    <div class="templates-modal" id="templatesModal">
+        <div class="templates-content">
+            <h2>选择简笔画模板</h2>
+            <div class="templates-grid">
+                <div class="template-item" data-template="cat">
+                    <canvas class="template-preview" width="100" height="100"></canvas>
+                    <span>小猫</span>
+                </div>
+                <div class="template-item" data-template="dog">
+                    <canvas class="template-preview" width="100" height="100"></canvas>
+                    <span>小狗</span>
+                </div>
+                <div class="template-item" data-template="bird">
+                    <canvas class="template-preview" width="100" height="100"></canvas>
+                    <span>小鸟</span>
+                </div>
+                <div class="template-item" data-template="fish">
+                    <canvas class="template-preview" width="100" height="100"></canvas>
+                    <span>小鱼</span>
+                </div>
+                <div class="template-item" data-template="flower">
+                    <canvas class="template-preview" width="100" height="100"></canvas>
+                    <span>花朵</span>
+                </div>
+                <div class="template-item" data-template="tree">
+                    <canvas class="template-preview" width="100" height="100"></canvas>
+                    <span>大树</span>
+                </div>
+                <div class="template-item" data-template="house">
+                    <canvas class="template-preview" width="100" height="100"></canvas>
+                    <span>房子</span>
+                </div>
+                <div class="template-item" data-template="car">
+                    <canvas class="template-preview" width="100" height="100"></canvas>
+                    <span>汽车</span>
+                </div>
+            </div>
+            <button class="close-btn" id="closeTemplates">关闭</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
