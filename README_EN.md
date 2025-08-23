@@ -6,7 +6,7 @@ A MediaPipe-based hand tracking drawing application that uses camera to track ha
 
 ## 🌐 Try Online
 
-**Live Demo**: [https://drawing-by-hand.vercel.app/](https://drawing-by-hand.vercel.app/)
+**Live Demo**: [drawing-by-hand](https://drawing-by-hand.vercel.app/)
 
 No installation required! Experience hand tracking drawing directly in your browser!
 

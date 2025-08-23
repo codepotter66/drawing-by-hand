@@ -6,7 +6,7 @@
 
 ## 🌐 在线体验
 
-**立即尝试**: [https://drawing-by-hand.vercel.app/](https://drawing-by-hand.vercel.app/)
+**立即尝试**: [手部追踪画图](https://drawing-by-hand.vercel.app/)
 
 无需安装，直接在浏览器中体验手部追踪画图功能！
 
